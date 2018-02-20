@@ -3,11 +3,19 @@ title: "TCGA data download"
 author: "Antonio Ahn"
 date: "`r Sys.Date()`"
 output:
+<<<<<<< HEAD
   pdf_document:
     toc: yes
   html_document:
     df_print: paged
     toc: yes
+=======
+  html_document:
+    df_print: paged
+    toc: yes
+  pdf_document:
+    toc: yes
+>>>>>>> 4203343b6214a072c3feb85611f00ef04d28d99e
   rmarkdown::html_vignette:
     number_sections: yes
     toc: yes
@@ -82,7 +90,11 @@ Skin cutaneous melanoma (SKCM) is selected and "20151101" is used as the rundate
 
 ```{r cache=TRUE, message=FALSE}
 readDataMel <- getFirehoseData (dataset="SKCM", runDate="20151101",forceDownload = TRUE,
+<<<<<<< HEAD
     clinical=TRUE, RNASeq2GeneNorm=TRUE, fileSizeLimit= 3000)
+=======
+    Clinic=TRUE, RNAseq2_Gene_Norm=TRUE, fileSizeLimit= 3000)
+>>>>>>> 4203343b6214a072c3feb85611f00ef04d28d99e
 ```
 
 The RNA-seq data (RNAseq2_Gene_Norm) contains gene expression levels generated using **MapSplice** for alignment and **RNA-Seq by Expectation-Maximization (RSEM)** for quantification. RSEM values are calculated using an algorithm that estimate abundances at the gene level to generate TPM (Transcripts Per Million) values. TPM is similar to FPKM and RPKM in that it accounts for multiple variables including library size and gene length. For normalisation, TPM values are divided by the 75th percentile (3rd quartile) and multiplied by 1000.
@@ -91,7 +103,11 @@ The RNA-seq data (RNAseq2_Gene_Norm) contains gene expression levels generated u
 
 Extract the clinical and RNA-seq data.
 ```{r cache=TRUE, message=FALSE}
+<<<<<<< HEAD
 clinMel <- getData(readDataMel, "clinical")
+=======
+clinMel <- getData(readDataMel, "Clinical")
+>>>>>>> 4203343b6214a072c3feb85611f00ef04d28d99e
 rnaseqMel <- getData(readDataMel, "RNASeq2GeneNorm")
 ```
 
@@ -407,7 +423,11 @@ save.image("/home/aahn/Bioinformatics/RDatafiles/TCGAmelanoma_methylation.RData"
 
 After i reduced the size of the methylation data to generate `me450kMel_rounded`, I saved into my computer for loading. 
 ```{r}
+<<<<<<< HEAD
 load("~/Dropbox/Education/Bioinformatics/5DataAnalysis/TCGAmelanoma/Methylation/TCGAmelanoma_methylation.RData") # this contains me450kMel_rounded
+=======
+load("~/Dropbox/Education/Bioinformatics/5. DataAnalysis/TCGAmelanoma/Methylation/TCGAmelanoma_methylation.RData") # this contains me450kMel_rounded
+>>>>>>> 4203343b6214a072c3feb85611f00ef04d28d99e
 
 dim(me450kMel_rounded)
 dim(probeinfo)
@@ -442,7 +462,11 @@ write.csv(me450kMel[me450kMel$X%in%probes_iwant,], file="meTIL_probes.csv")
 The "meTIL_probes.csv" file is transfered from the server to my computer and then loaded. 
 
 ```{r cache=TRUE}
+<<<<<<< HEAD
 meTIL_probes <- read.csv("~/Dropbox/Education/Bioinformatics/5DataAnalysis/TCGAmelanoma/Methylation/meTIL_probes.csv", row.name=1)
+=======
+meTIL_probes <- read.csv("~/Dropbox/Education/Bioinformatics/5. DataAnalysis/TCGAmelanoma/Methylation/meTIL_probes.csv", row.name=1)
+>>>>>>> 4203343b6214a072c3feb85611f00ef04d28d99e
 
 dim(meTIL_probes)
 meTIL_probe_info <- meTIL_probes[,1:3] # separating out the probe info from the probe values
