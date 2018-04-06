@@ -1,74 +1,34 @@
 ---
-title: "TCGA data download"
+title: "TCGA RNAseq, me450k and clinical data download"
 author: "Antonio Ahn"
 date: "`r Sys.Date()`"
 output:
-<<<<<<< HEAD
   pdf_document:
+    highlight: default
+    toc: yes
+  github_document:
     toc: yes
   html_document:
     df_print: paged
     toc: yes
-=======
-  html_document:
-    df_print: paged
-    toc: yes
-  pdf_document:
-    toc: yes
->>>>>>> 4203343b6214a072c3feb85611f00ef04d28d99e
-  rmarkdown::html_vignette:
-    number_sections: yes
-    toc: yes
-references:
-- author:
-  - family: Samur, M. K.
-    given: null
-  id: ref1
-  issued:
-    year: 2014
-  journal: PLoS One
-  number: 9
-  pages: null
-  title: RTCGAToolbox a new tool for exporting TCGA Firehose data.
-  volume: 9
-- author:
-  - family: Ekmekcioglu, S., et al
-    given: null
-  id: ref2
-  issued:
-    year: 2016
-  journal: Clin Cancer Res
-  number: 12
-  pages: 3016-3024
-  title: Inflammatory Marker Testing Identifies CD74 Expression in Melanoma Tumor
-    Cells, and Its Expression Associates with Favorable Survival for Stage III Melanoma
-  volume: 22
-- author:
-  - family: Jeschke, J., et al.
-    given: null
-  id: ref3
-  issued:
-    year: 2017
-  journal: J Clin Invest
-  number: 8
-  pages: 3090-3102
-  title: DNA methylation-based immune response signature improves patient diagnosis
-    in multiple cancers
-  volume: 127
+bibliography: /Users/antonioahn/Dropbox/GitHub/Downloading-TCGA-data/TCGAdatadownload.bib
 ---
+
+Samur2014: RTCGAToolbox: a new tool for exporting TCGA Firehose data
+
+Jeschke2017: DNA methylation-based immune response signature improves patient diagnosis in multiple cancers
+
+Ekmekcioglu2016: Inflammatory Marker Testing Identifies CD74 Expression in Melanoma Tumor Cells, and Its Expression Associates with Favorable Survival for Stage III Melanoma
+
 
 #Introduction
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo=TRUE)
-```
+This document outlines the approach i took to download data level 3 TCGA data. RNA-seq, methylation 450K data and clinical information was downloaded using the `RTCGAToolbox`[@Samur2014] package and then processed (cleaned-up) for downstream analysis.
 
-This document outlines the approach i took to download data from level 3 and 4 TCGA data repositry. The clinical information, RNA-seq data and methylation 450K data was downloaded using the `RTCGAToolbox`[@ref1] package and then processed or cleaned-up for downstream analysis.
+The `RTCGAToolbox` package written by Samur, retreives data from the broads institutive firehose database. Detailed information on how to use this package are available in the [Vignette](https://www.bioconductor.org/packages/devel/bioc/vignettes/RTCGAToolbox/inst/doc/RTCGAToolbox-vignette.html), online courses [PH525Xseries](http://genomicsclass.github.io/book/pages/tcga.html) and [Youtube](http://rafalab.github.io/pages/harvardx.html) videos. Many of the codes used here were taken from these resources. 
 
-The `RTCGAToolbox` package retreives data from the broads institutive firehose database. Detailed information on how to use this package and the included functions are available in the [Vignette](https://www.bioconductor.org/packages/devel/bioc/vignettes/RTCGAToolbox/inst/doc/RTCGAToolbox-vignette.html), online [PH525Xseries](http://genomicsclass.github.io/book/pages/tcga.html) courses and [Youtube](http://rafalab.github.io/pages/harvardx.html) videos. 
-
-Load the library
 ```{r message=FALSE}
+#Load the library
 library(RTCGAToolbox)
 ```
 
@@ -79,135 +39,137 @@ getFirehoseDatasets()
 head(getFirehoseRunningDates())
 head(getFirehoseAnalyzeDates())
 ```
-
  
-#Clinical and RNA-seq data - download and processing
+#Clinical and RNA-seq data - download and process
 
 The clinical information and normalised RNA-seq data is downloaded.
-The methylation data is downloaded separately from the clinical and RNA-seq data because its size was too large for my computer to handle. Thus the methylation data was downloaded in the DSM3735 server.
+The methylation data is downloaded separately from the clinical and RNA-seq data because its size was too large for my computer to handle. Thus the methylation data was downloaded in separately in our University departments computer cluster. 
 
-Skin cutaneous melanoma (SKCM) is selected and "20151101" is used as the rundate. The default file size is 500 mb and this limit is extended using `fileSizeLimit`.
+Skin cutaneous melanoma (SKCM) is selected and "20160128" is used as the rundate. The default file size is 500 mb and this limit is extended to 3000 mb using `fileSizeLimit`.
 
-```{r cache=TRUE, message=FALSE}
-readDataMel <- getFirehoseData (dataset="SKCM", runDate="20151101",forceDownload = TRUE,
-<<<<<<< HEAD
-    clinical=TRUE, RNASeq2GeneNorm=TRUE, fileSizeLimit= 3000)
-=======
-    Clinic=TRUE, RNAseq2_Gene_Norm=TRUE, fileSizeLimit= 3000)
->>>>>>> 4203343b6214a072c3feb85611f00ef04d28d99e
+The RNA-seq data (RNASeq2GeneNorm) contains normalised gene expression levels generated using **MapSplice** for alignment and **RNA-Seq by Expectation-Maximization (RSEM)** for quantification. RSEM values are calculated using an algorithm that estimate abundances at the gene level to generate TPM (Transcripts Per Million) values. TPM is similar to FPKM and RPKM in that it accounts for total number of reads and gene length. However TPM has gained more popularity over recent years because it is easier to interpret and more stable when comparing between samples. The normalisation is done by dividing the TPM values by the 75th percentile (3rd quartile) and multiplication by 1000.
+
+```{r eval=FALSE}
+getFirehoseDatasets()
+head(getFirehoseRunningDates())
+head(getFirehoseAnalyzeDates())
+
+readDataMel <- getFirehoseData (dataset="SKCM", 
+                                runDate="20160128",
+                                forceDownload = TRUE, 
+                                clinical = TRUE, 
+                                RNASeq2GeneNorm = TRUE, 
+                                Methylation = FALSE, fileSizeLimit= 3000)
 ```
 
-The RNA-seq data (RNAseq2_Gene_Norm) contains gene expression levels generated using **MapSplice** for alignment and **RNA-Seq by Expectation-Maximization (RSEM)** for quantification. RSEM values are calculated using an algorithm that estimate abundances at the gene level to generate TPM (Transcripts Per Million) values. TPM is similar to FPKM and RPKM in that it accounts for multiple variables including library size and gene length. For normalisation, TPM values are divided by the 75th percentile (3rd quartile) and multiplied by 1000.
-
-##Extracting the data 
-
-Extract the clinical and RNA-seq data.
-```{r cache=TRUE, message=FALSE}
-<<<<<<< HEAD
-clinMel <- getData(readDataMel, "clinical")
-=======
-clinMel <- getData(readDataMel, "Clinical")
->>>>>>> 4203343b6214a072c3feb85611f00ef04d28d99e
-rnaseqMel <- getData(readDataMel, "RNASeq2GeneNorm")
-```
-
-#Data cleaning of clinical and RNA-seq information 
-
-The identifiers are structured differently between the clinical and RNA-seq data. The identifiers in the RNA-seq data are transformed to be the same as the ones in the clinical data. Duplicate RNA-seq data are removed and any RNA-seq without clinical information or any clinical information without RNA-seq data are removed. 
-
-*Here i need to add in what the TCGA name means. For example, TCGA-3N-A9WB-06A-11R-A38C-07, what does each section mean. Is there a difference in the raw identifier names between the duplicates?*
-
-##Changing patient identifier names
-
-The identifiers are structure differently between the clinical and RNA-seq data.
 ```{r}
-dim(clinMel)
-head(clinMel)
-
-dim(rnaseqMel)
-rnaseqMel[1:5,1:5]
+load("~/Dropbox/GitHub/Downloading-TCGA-data/RDatafiles/TCGA_readDataSKCM.RData")
 ```
 
-The identifiers in the RNA-seq data are transformed to be the same as the ones in the clinical data.
-```{r cache=TRUE}
-rid = tolower(substr(colnames(rnaseqMel),1,12))
+```{r message=FALSE}
+#extract the data
+clinSKCM <- getData(readDataMel, "clinical")
+rnaseqSKCM <- getData(readDataMel, "RNASeq2GeneNorm")
+```
+
+The clinical and RNA-seq data are processed (or cleaned up) before any downstream analysis.
+
+1) The TCGA barcodes are structured differently between the clinical and RNA-seq datasets and thus needs to be changed/matched. For example the first TCGA barcode in the RNAseq data is "TCGA-3N-A9WB-06A-11R-A38C-07" whereas in the clinical data it is "tcga.d3.a2je"
+
+2) Some samples that have 2 RNA-seq data. Duplicate RNA-seq data are removed.
+
+3) Some samples contain RNA-seq data but there is no clinical information. Only those samples that have both RNA-seq and clinical information are retained for downstream analysis. 
+```{r}
+#Changing patient identifier names
+dim(clinSKCM)
+head(clinSKCM)
+
+dim(rnaseqSKCM)
+rnaseqSKCM[1:5,1:5]
+
+#The identifiers in the RNA-seq data are transformed to be the same as the ones in the clinical data. This includes substringing the first 12 characters and replacing "-" with "."
+
+rid = tolower(substr(colnames(rnaseqSKCM),1,12))
 rid = gsub("-", ".", rid)  
+colnames(rnaseqSKCM) = rid 
 
-table(rid %in% rownames(clinMel)) #all 473 RNA-seqMel samples have corresponding clinical details 
-
-length(intersect(rid,rownames(clinMel))) 
-# 469 patients out of 470 have RNA-seq data
-
-colnames(rnaseqMel) = rid 
-head(colnames(rnaseqMel))
+length(intersect(rid,rownames(clinSKCM))) # 469 samples intersect between RNAseq and clinSKCM
 ```
 
-##Remove duplicated samples
-
-Samples with duplicated names are removed. These are samples that have 2 RNA-seq data for some reason. The data between the replicates are very similar and thus we remove the second duplicate. 
 ```{r}
-duplicatedSamples <- which(duplicated(colnames(rnaseqMel))) # 4  duplicate samples
+#Remove duplicated samples
+#Samples with duplicated names are removed. The data between the replicates are very similar however looking into the original barcodes, some of the duplicates are primary or metastatic, or a normal solid tumour. Tumours that are labeled primary, normal solid tumour or additional metastatic are removed. 
 
-duplicatedSampleNames<-colnames(rnaseqMel)[duplicated(colnames(rnaseqMel))]
+duplicatedSamples <- which(duplicated(colnames(rnaseqSKCM))) # 4  duplicate samples
 
-rnaseqMel_duplicated <-rnaseqMel[,colnames(rnaseqMel) %in% duplicatedSampleNames]
+duplicatedSampleNames <- colnames(rnaseqSKCM)[duplicated(colnames(rnaseqSKCM))]
+
+rnaseqMel_duplicated <- rnaseqSKCM[,colnames(rnaseqSKCM) %in% duplicatedSampleNames] #matrix of only those duplicated samples
 
 colnames(rnaseqMel_duplicated)
+```
 
+```{r figure1, fig.cap="\\label{fig:figure1} The duplicate samples are plotted together to assess the correlation. They look similar and it is not obvious which duplicate to keep."}
 par(mfrow=c(2,2))
 plot(log2(rnaseqMel_duplicated[1001:2000,1:2]))
 plot(log2(rnaseqMel_duplicated[1001:2000,3:4]))
 plot(log2(rnaseqMel_duplicated[1001:2000,5:6]))
 plot(log2(rnaseqMel_duplicated[1001:2000,7:8]))
-#  it is not obvious which of the duplicates to keep, so we drop the second
 ```
 
+The full TCGA barcodes names of these duplicate samples are investigated. Information on TCGA barcodes are given [here](https://wiki.nci.nih.gov/display/TCGA/TCGA+barcode) and information on the sample type (e.g. primary, metastatic, additional metastsatic) from the TCGA barcode is provided [here](https://gdc.cancer.gov/resources-tcga-users/tcga-code-tables/sample-type-codes). 
+```{r}
+index <- which(colnames(rnaseqSKCM) %in% duplicatedSampleNames)
 
-```{r cache=TRUE}
-rnaseqMel = rnaseqMel[,-which(duplicated(colnames(rnaseqMel)))] # getting rid of the duplicate
-
-dim(rnaseqMel) # from 473 samples to 469
-
-length(intersect(colnames(rnaseqMel),rownames(clinMel))) 
-length(rownames(clinMel)) # there is 1 sample in clinMel which there is absent in rnaseqMel 
-
-clinMel <-clinMel[intersect(colnames(rnaseqMel),rownames(clinMel)),]
-dim(clinMel)
-
-table(colnames(rnaseqMel)==rownames(clinMel)) # patient names are in the same order
+rnaseqSKCM2 <- getData(readDataMel, "RNASeq2GeneNorm")
+original_rnaseq_barcode <- colnames(rnaseqSKCM2)
+original_rnaseq_barcode[index]
 ```
 
-#Create an expression set
+#[1] "TCGA-D3-A1QA-07A-11R-A37K-07" "TCGA-D3-A1QA-06A-11R-A18T-07"
+#[3] "TCGA-ER-A19T-06A-11R-A18U-07" "TCGA-ER-A19T-01A-11R-A18T-07"
+#[5] "TCGA-ER-A2NF-06A-11R-A18T-07" "TCGA-ER-A2NF-01A-11R-A18T-07"
+#[7] "TCGA-GN-A4U8-11A-11R-A32P-07" "TCGA-GN-A4U8-06A-11R-A32P-07"
 
-An expression set is created to store the log2 transformed RNA-seq data and the clinical information. 
-```{r message=FALSE}
-library(Biobase)
+The sample types of these duplicate samples are either of primary solid (01) tumour, metastastic (06), additional metastastic (07) or solid tissue (11) normal. 
+
+Here i will retain metastatic tumours and thus will remove the primary solid tumour, additional metastatic and solid tissue normal. 
+
+1st duplicate samples: remove the additional metastatic
+2nd duplicate samples: remove the primary tumour 
+3rd duplicate samples: remove the primary
+4th duplicate samples: remove the solid tissue normal
+
+```{r}
+remove_index <- c("TCGA-D3-A1QA-07A-11R-A37K-07", "TCGA-ER-A19T-01A-11R-A18T-07",  "TCGA-ER-A2NF-01A-11R-A18T-07", "TCGA-GN-A4U8-11A-11R-A32P-07") #excluding these 
+
+remove_index <- which(original_rnaseq_barcode %in% remove_index)
+
+rnaseqSKCM = rnaseqSKCM[,-remove_index] # getting rid of the duplicate
+
+dim(rnaseqSKCM) # from 473 samples to 469
+
+length(intersect(colnames(rnaseqSKCM),rownames(clinSKCM)))  #469 samples interect between rnaseqSKCM and clinSKCM
+length(rownames(clinSKCM)) # there is 1 sample in clinMel which there is absent in rnaseqMel 
+
+clinSKCM <- clinSKCM[intersect(colnames(rnaseqSKCM),rownames(clinSKCM)),]
+dim(clinSKCM)
+
+table(colnames(rnaseqSKCM)==rownames(clinSKCM)) # patient names are in the same order
 ```
-
-```{r cache= TRUE}
-readES = ExpressionSet(as.matrix(log2(rnaseqMel+1)))
-readES
- 
-exprs(readES)[1:3,1:3]
-
-pData(readES) = clinMel
-```
-
 
 # Survival data clean-up and analysis
 
 ## Survival analysis: background
 
-Important pData information for survival analysis is "vital_status", "days_to_death" and "days_to_last_followup"
-
-Information from [here](https://groups.google.com/forum/#!topic/ucsc-cancer-genomics-browser/YvKnWZSsw1Q) 
-
 To analyse overall survival, 3 variables in the `clinMel` data set is required, which are "vital_status", "days_to_death" and "days_to_last_followup".
 
+Information is available in a googles forum page [here](https://groups.google.com/forum/#!topic/ucsc-cancer-genomics-browser/YvKnWZSsw1Q) 
+
 ```{r}
-dim(clinMel)
-str(clinMel[,c("vital_status","days_to_death","days_to_last_followup")])
-clinMel[1:5,c("vital_status","days_to_death","days_to_last_followup")]
+dim(clinSKCM)
+str(clinSKCM[,c("vital_status","days_to_death","days_to_last_followup")])
+clinSKCM[1:5,c("vital_status","days_to_death","days_to_last_followup")]
 ```
 
 * **vital_status:** "1" means deceased and "0" means still alive. 
@@ -217,18 +179,23 @@ clinMel[1:5,c("vital_status","days_to_death","days_to_last_followup")]
 
 ## Survival data: Exploratory analysis
 
-For most patients (391 patients), the days_to_death and days_to_last_followup are mutually exlcusive; if theres an NA in days_to_death then there is a number to DaystoLastfollowup and vice versa.
+In 460 out of 469 patients, the days_to_death and days_to_last_followup are mutually exlcusive; if theres an NA in days_to_death then there is a number to DaystoLastfollowup and vice versa. The remaining have NA for both days_to_death and days_to_last_followup. 
 ```{r}
-table(!is.na(clinMel[,"days_to_death"]) & is.na(clinMel[,"days_to_last_followup"]))
+table(!is.na(clinSKCM[,"days_to_death"]) & is.na(clinSKCM[,"days_to_last_followup"])) #There are 220 patients who does not contain (NA) days_to_last_followup however contains days_to_death
 
-table(is.na(clinMel[,"days_to_death"]) & !is.na(clinMel[,"days_to_last_followup"]))
+table(is.na(clinSKCM[,"days_to_death"]) & !is.na(clinSKCM[,"days_to_last_followup"])) #There are 240 patients that do not contain (NA) days_to_death but contain days_to_last_followup
+
+table(is.na(clinSKCM$"days_to_death") & is.na(clinSKCM$"days_to_last_followup")) #there are 9 patinets that contain NA for both days_to_death and days_to_last_followup
 ```
 
 However there are some patients with both days_to_last_followup and days_to_death (69 patients). Also there are patients with both of these variables as NA (9 patients).
 ```{r}
 survivalVariables <- c("days_to_last_followup","vital_status","days_to_death")
 
-index <- !is.na(clinMel$"days_to_death") & !is.na(clinMel$"days_to_last_followup")
+index <- !is.na(clinSKCM$"days_to_death") & !is.na(clinSKCM$"days_to_last_followup")
+
+ table(is.na(clinSKCM$"days_to_death") & is.na(clinSKCM$"days_to_last_followup"))
+
 clinMel[index,survivalVariables]
 dim(clinMel[index,survivalVariables])
 
@@ -237,41 +204,37 @@ clinMel[index,survivalVariables]
 dim(clinMel[index,survivalVariables])
 ```
 
-There are also some patients with a negative days_to_last_followup. What does this mean?
+There is also 1 patient with a negative days_to_last_followup. What does this mean?
 ```{r}
 survivalVariables <- c("days_to_last_followup","vital_status","days_to_death")
 
-index <- which(clinMel[,"days_to_death"] < 0 | clinMel[,"days_to_last_followup"] < 0)
+index <- which(clinSKCM[,"days_to_death"] < 0 | clinSKCM[,"days_to_last_followup"] < 0)
 
-clinMel[index,survivalVariables]
+clinSKCM[index,survivalVariables]
 ```
-
-
 
 ## Survival analysis: merge days_to_death and days_to_last_followup
 
-Here i merge days_to_death and days_to_last_followup to create a new variable called new_death. Most are simple to handle because they are mutually exlcusive; if there's an NA in days_to_death then there is a number to days_to_last_followup and vice versa. However, as shown above, some patients have values to both variables with different number of days which i am unsure what that means. Also some patients have an NA to both variables. 
+Here i merge days_to_death and days_to_last_followup to create a new variable called new_death. Most are simple to handle because they are mutually exlcusive; if there's an NA in days_to_death then there is a number to days_to_last_followup and vice versa. 
 
-Here i create a new variable called new_death.
+DELETE: However, as shown above, some patients have values to both variables with different number of days which i am unsure what that means. Also some patients have an NA to both variables. 
 
+Here i create a new variable called new_death in which:
 * If patient has deceased (1 in vital status), the days_to_death is selected
 * If patient is alive (0 in vital status), days_to_last_followup is selected
 
 ```{r cache=TRUE}
-mergeOS <- ifelse(clinMel[,"vital_status"]==1, clinMel[,"days_to_death"], clinMel[,"days_to_last_followup"] )
+mergeOS <- ifelse(clinSKCM[,"vital_status"]==1, clinSKCM[,"days_to_death"], clinSKCM[,"days_to_last_followup"] )
 
-summary(mergeOS)
-
-clinMel$mergeOS <- as.numeric(mergeOS)
-```
-
-clinMel with the `mergeOS` parameter is re-loaded into `readES`.
-```{r}
-pData(readES) = clinMel
+str(mergeOS)
+table(is.na(mergeOS))
+clinSKCM$mergeOS <- as.numeric(mergeOS)
 ```
 
 
 ## Survival analysis: sanity check with t-stage
+
+Here i perform a "sanity check" to see if the survival data makes sense. First i look at the prognosis according to the tumour stage. 
 
 * t0 - patients without a known primary tumor.
 * t1
@@ -286,14 +249,15 @@ library(survival)
 ```
 
 ```{r}
-ev <- as.numeric(pData(readES)$vital_status)
-fut <-as.numeric(pData(readES)$mergeOS)
+ev <- as.numeric(clinSKCM$vital_status)
+fut <-as.numeric(clinSKCM$mergeOS)
 su = Surv(fut, ev)
 
-table(pData(readES)$pathology_T_stage)
-table(substr(clinMel$pathology_T_stage,1,2))
+# There are 15 different types of T-stage. Here i reduce this number to 7 different groups. 
+table(clinSKCM$pathology_T_stage)
+table(substr(clinSKCM$pathology_T_stage,1,2)) 
 
-t_stage = factor(substr(clinMel$pathology_T_stage,1,2))
+t_stage = factor(substr(clinSKCM$pathology_T_stage,1,2))
 
 plot(survfit(su~t_stage),mark.time=TRUE, lwd=2, col=1:7, las=1, cex.axis=1.5)
 mtext("Overall Survival", side=2, line=2.7, cex=1.5)
@@ -302,28 +266,28 @@ mtext("Time (Days)", side=1, line=2.8, cex=1.5)
 ntab = table(t_stage)
 ns = paste("[n=", ntab, "]", sep="")
 legend(8000, .8, col=1:7, lwd=2, legend=paste(levels(t_stage), ns))
-text(6000,1, paste("p.value = 3.25e-06 "))
+text(6000,1, paste("p.value = 5.25e-06"))
 
 summary(coxph(su~t_stage))
 survdiff(su~t_stage)
 ```
 
-
-There is a significant statistical difference in overall survival between the different T stages
+There is a significant statistical difference in overall survival between the different T stages. 
 
 
 ## Survival analysis: sanity check with CD74
 
-CD74 gene exprresion was found to be associated with good prognosis using TCGA data [@ref2]. 
+Another "sanity check" is done but this time with using the RNAseq data. CD74 gene exprresion was found to be associated with good prognosis using SKCM TCGA data [@Ekmekcioglu2016]. 
 
 ```{r}
-CD74 <- ifelse(exprs(readES)["CD74",] > median(exprs(readES)["CD74",]), 1, 0)
+#Patient samples are split into high and low CD74 expression using the median as the cut-off
+CD74 <- ifelse(rnaseqSKCM["CD74",] > median(rnaseqSKCM["CD74",]), 1, 0)
 # higher than median is 1, lower than median is 0
 CD74 <- as.factor(CD74)
 table(CD74)
 
-ev <- as.numeric(pData(readES)$vital_status)
-fut <-as.numeric(pData(readES)$mergeOS)
+ev <- as.numeric(clinSKCM$vital_status)
+fut <-as.numeric(clinSKCM$mergeOS)
 su = Surv(fut, ev)
 
 plot(survfit(su~CD74),mark.time=TRUE, lwd=2, col=c("black","red"), las=1, cex.axis=1.5)
@@ -333,56 +297,50 @@ mtext("Time (Days)", side=1, line=2.8, cex=1.5)
 ntab = table(CD74)
 ns = paste("[n=", ntab, "]", sep="")
 legend(8000, .8, col= c("black","red"), lwd=2, legend=paste(levels(CD74), ns))
-text(4000,0.8, paste("p.value= 9.61e-07"))
+text(4000,0.8, paste("p.value= 1.94e-06"))
 
-survdiff(su~CD74, data=clinMel)
+survdiff(su~CD74, data=clinSKCM)
 ```
 
-Higher CD74 gene expression is associated with a better prognosis.
+As found in the study, higher CD74 gene expression is associated with a better prognosis.
 
 
 # Methylation 450K data - download and processing
 
-The methylation 450K data-frame was too big (>6gb) to download or work with in my desktop (my dekstop freezes). It has 485,577 rows and 478 columns with each value having many digits. Therefore I had to use the DSM3735 server (based in the pathology department in Otago university) to download the data and then reduce the file size by lowering the number of decimal points for every beta-value. The size-reduced file was then moved to my desktop and loaded into `R`. 
-
-```{r engine='bash', eval=FALSE}
-ssh -X aahn@dsm3735.otago.ac.nz # to login to the server
-
-scp aahn@dsm3735.otago.ac.nz:/home/aahn/PDL1/TCGAMel1.RData /Users/antonioahn/Desktop # Move the RData file from the DSM3735 server to my desktop 
-```
-
-It is recommended to lower the worker/core usage to prevent crashing the server. 
-```{r message=FALSE, eval=FALSE}
-library(BiocParallel)
-registered()
-register(MulticoreParam(workers=2)) 
-```
-
-The methylation data are the Beta-values from the 450K methylation arrays. In the DSM3735 server, the methylation data was downloaded, extracted and reduced in size.
-```{r eval=FALSE}
-readDataMel <- getFirehoseData (dataset="SKCM", runDate="20151101",forceDownload = TRUE,
-    Clinic=FALSE, RNAseq2_Gene_Norm=FALSE,Methylation = TRUE, fileSizeLimit= 3000)
-
-me450kMel = getData(readDataMel, "Methylation",1) 
-```
-
+The methylation 450K data-frame was too big (>6gb) to download or work with in my desktop. It has 485,577 rows and 478 columns with each value having many digits. Therefore I had to use our cluster network to download the data and then reduce the file size by lowering the number of decimal points for every beta-value. The size-reduced file was then moved to my desktop and loaded into `R`. 
 
 ```{r eval=FALSE}
-dim(me450kMel)
-head(colnames(me450kMel))
+#This was done in our DSM cluster
+#downloading the methylation 450k data from TCGA melanoma samples
+readDataSKCM_methylation <- getFirehoseData(dataset = "SKCM",
+                               runDate = "20160128",
+                               forceDownload = TRUE,
+                               clinical = FALSE,
+                               RNASeq2GeneNorm = FALSE,
+                               Methylation = TRUE,
+                               fileSizeLimit = 3000)
 
-probeinfo <- me450kMel[,1:3] # These colunms have the "Gene_Symbol", "Chromosome" and "Genomic_Coordinate" information.
-
-write.csv(probeinfo , "probeinfo.csv")
+me450kSKCM = getData(readDataSKCM_methylation, "Methylation",1) 
 ```
 
-```{r engine='bash', eval=FALSE}
-scp aahn@dsm3735.otago.ac.nz:/home/aahn/probeinfo.csv /Users/antonioahn/Desktop
+```{r eval=FALSE}
+probeinfo <- me450kSKCM[,1:3] 
+me450kSKCM <- me450kSKCM[,-(1:3)]
+
+me450kSKCM <- sapply(me450kSKCM, as.numeric)
+
+save.image("methylation450k_20160128_raw.RData")
+
+#scp /home/STUDENT/ahnje770/methylation450k_20160128_raw.RData  /mnt/hcs/dsm-eccles-seq
+
+me450kSKCM_rounded <- as.matrix(round(me450kSKCM, digits=3))
+write.csv(me450kSKCM_rounded, "me450kSKCM_rounded.csv")
+
+#scp /home/STUDENT/ahnje770/me450kSKCM_rounded.csv /mnt/hcs/dsm-eccles-seq
+
+names(as.list(.GlobalEnv)) #too look at the varialbes in the global environment (in the DSM cluster)
 ```
 
-```{r eval=FALSE }
-me450kMel <- me450kMel[,4:478] # dropping the first 3 columns which contains the probe info
-```
 
 ##Change the identifier names in the methylation data
 
