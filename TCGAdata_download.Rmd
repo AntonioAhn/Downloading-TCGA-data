@@ -333,65 +333,95 @@ save.image("methylation450k_20160128_raw.RData")
 
 #scp /home/STUDENT/ahnje770/methylation450k_20160128_raw.RData  /mnt/hcs/dsm-eccles-seq
 
-me450kSKCM_rounded <- as.matrix(round(me450kSKCM, digits=3))
-write.csv(me450kSKCM_rounded, "me450kSKCM_rounded.csv")
-
-#scp /home/STUDENT/ahnje770/me450kSKCM_rounded.csv /mnt/hcs/dsm-eccles-seq
 
 names(as.list(.GlobalEnv)) #too look at the varialbes in the global environment (in the DSM cluster)
+
+#to load it in the future in DSM cluster
+load("/mnt/hcs/dsm-eccles-seq/methylation450k_files/methylation450k_20160128_raw.RData")
 ```
 
 
 ##Change the identifier names in the methylation data
 
 ```{r eval=FALSE}
-rid = tolower(substr(colnames(me450kMel),1,12))
+rid = tolower(substr(colnames(me450kSKCM),1,12))
 rid = gsub("-", ".", rid)
 
-colnames(me450kMel) <- rid
+duplicatedSampleNames_me450k <- rid[which(duplicated(rid))]
+colnames(me450kSKCM)[rid %in% duplicatedSampleNames_me450k]
+# [1] "TCGA-D3-A1QA-07A-11D-A373-05" "TCGA-D3-A1QA-06A-11D-A19B-05"
+# [3] "TCGA-ER-A19T-06A-11D-A19D-05" "TCGA-ER-A19T-01A-11D-A19D-05"
+# [5] "TCGA-ER-A2NF-06A-11D-A19D-05" "TCGA-ER-A2NF-01A-11D-A19D-05"
+# [7] "TCGA-FW-A3R5-11A-11D-A23D-05" "TCGA-FW-A3R5-06A-11D-A23D-05"
+# [9] "TCGA-GN-A4U8-11A-11D-A32S-05" "TCGA-GN-A4U8-06A-11D-A32S-05"
 
-which(duplicated(colnames(me450kMel)))
- 
-me450kMel <- me450kMel[,!duplicated(colnames(me450kMel))] # dropping the second duplicate samples
-dim(me450kMel)
+#Just as the RNA-seq data, here I remove the additional metastatic, primary tumours, and normal solid tissues 
 
+#removing the duplicated samples here
+#1st duplicate: remove the additional metastatic (07)
+#2nd duplicate: remove the primary tumour (01)
+#3rd duplicate: remove the primary (01)
+#4th duplicate: remove the solid tissue normal (11)
+#5th duplicate: remove the solid tissue normal (11)
 
-table(duplicated(colnames(me450kMel))) 
-# me450kMel has 470 samples but rnaseqMel has 469. There is 1 extra sample in me450kMel.
+#01 Primary solid tumour 
+#06 metastatic
+#07 additional metastastatic
+#11 Solid tissue normal 
 
-table(colnames(me450kMel)%in%colnames(rnaseqMel)) 
+remove_index <- c("TCGA-D3-A1QA-07A-11D-A373-05", "TCGA-ER-A19T-01A-11D-A19D-05" ,  "TCGA-ER-A2NF-01A-11D-A19D-05", "TCGA-FW-A3R5-11A-11D-A23D-05", "TCGA-GN-A4U8-11A-11D-A32S-05")
+remove_index <- which(colnames(me450kSKCM) %in% remove_index)
+remove_index #the rows i will be removing for the duplicated samples
+#[1]  36 316 324 387 414
 
-me450kMel <- me450kMel[,colnames(me450kMel)%in%colnames(rnaseqMel)] # keeping only the matching samples
+me450kSKCM = me450kSKCM[,-remove_index] # getting rid of the duplicate
 
-table(colnames(rnaseqMel)==colnames(me450kMel)) # Everything is in the same length and order. 
- 
-table(rownames(clinMel)==colnames(me450kMel))
+dim(me450kSKCM) # from 475 samples to 470
+table(duplicated(colnames(me450kSKCM)))
+#FALSE 
+#  470
+
+rid = tolower(substr(colnames(me450kSKCM),1,12))
+rid = gsub("-", ".", rid)
+
+colnames(me450kSKCM) <- rid
+
+length(intersect(colnames(me450kSKCM),colnames(rnaseqSKCM)))  #469 samples interect between meTIL_probes and rnaseqSKCM
+length(colnames(meTIL_probes)) # there is 1 sample in clinMel which there is absent in rnaseqMel 
+
+me450kSKCM <- me450kSKCM[,intersect(colnames(me450kSKCM),colnames(rnaseqSKCM))]
+dim(meTIL_probes)
+
+table(colnames(rnaseqSKCM)==colnames(me450kSKCM)) # patient names are in the same order
 ```
+
 
 ##Reducing the size of the methylation 450K data
 
 ```{r eval=FALSE}
-str(me450kMel) # this shows that all the values are characters. 
+str(me450kSKCM) # this shows that all the values are characters. 
 
-me450kMel <- sapply(me450kMel, as.numeric)
-me450kMel_rounded <- as.matrix(round(me450kMel, digits=3)) # Round to 3 digits
+me450kSKCM <- sapply(me450kSKCM, as.numeric) 
+me450kSKCM_rounded <- as.matrix(round(me450kSKCM, digits=3)) # Round to 3 digits
+write.csv(me450kSKCM_rounded, "me450kSKCM_rounded.csv")
 
-save.image("/home/aahn/Bioinformatics/RDatafiles/TCGAmelanoma_methylation.RData")
+#scp /home/STUDENT/ahnje770/me450kSKCM_rounded.csv /mnt/hcs/dsm-eccles-seq
+
+rm(me450kSKCM) #remove the unrounded me450kfile
+setwd("/mnt/hcs/dsm-eccles-seq/methylation450k_files")
+
+save.image("methylation450k_20160128_rounded.RData")
 ```
 
 After i reduced the size of the methylation data to generate `me450kMel_rounded`, I saved into my computer for loading. 
 ```{r}
-<<<<<<< HEAD
-load("~/Dropbox/Education/Bioinformatics/5DataAnalysis/TCGAmelanoma/Methylation/TCGAmelanoma_methylation.RData") # this contains me450kMel_rounded
-=======
-load("~/Dropbox/Education/Bioinformatics/5. DataAnalysis/TCGAmelanoma/Methylation/TCGAmelanoma_methylation.RData") # this contains me450kMel_rounded
->>>>>>> 4203343b6214a072c3feb85611f00ef04d28d99e
+load("/Volumes/dsm-eccles-seq/methylation450k_files/methylation450k_20160128_rounded.RData") #"/Volumes" (on my dekstop) is the same as "/mnt/hcs" (in DSM cluster)
 
-dim(me450kMel_rounded)
+dim(me450kSKCM_rounded)
 dim(probeinfo)
-class(me450kMel_rounded)
+class(me450kSKCM_rounded)
 
-me450kMel_rounded[1:3,1:3]
+me450kSKCM_rounded[1:3,1:3]
 ```
 
 ##Acquring methylation probe values for meTIL-score
@@ -420,11 +450,8 @@ write.csv(me450kMel[me450kMel$X%in%probes_iwant,], file="meTIL_probes.csv")
 The "meTIL_probes.csv" file is transfered from the server to my computer and then loaded. 
 
 ```{r cache=TRUE}
-<<<<<<< HEAD
 meTIL_probes <- read.csv("~/Dropbox/Education/Bioinformatics/5DataAnalysis/TCGAmelanoma/Methylation/meTIL_probes.csv", row.name=1)
-=======
 meTIL_probes <- read.csv("~/Dropbox/Education/Bioinformatics/5. DataAnalysis/TCGAmelanoma/Methylation/meTIL_probes.csv", row.name=1)
->>>>>>> 4203343b6214a072c3feb85611f00ef04d28d99e
 
 dim(meTIL_probes)
 meTIL_probe_info <- meTIL_probes[,1:3] # separating out the probe info from the probe values
