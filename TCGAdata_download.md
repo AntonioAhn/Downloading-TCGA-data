@@ -14,14 +14,7 @@ output:
 bibliography: /Users/antonioahn/Dropbox/GitHub/Downloading-TCGA-data/TCGAdatadownload.bib
 ---
 
-Samur2014: RTCGAToolbox: a new tool for exporting TCGA Firehose data
-
-Jeschke2017: DNA methylation-based immune response signature improves patient diagnosis in multiple cancers
-
-Ekmekcioglu2016: Inflammatory Marker Testing Identifies CD74 Expression in Melanoma Tumor Cells, and Its Expression Associates with Favorable Survival for Stage III Melanoma
-
-
-#Introduction
+# Introduction
 
 This document outlines the approach i took to download data level 3 TCGA data. RNA-seq, methylation 450K data and clinical information was downloaded using the `RTCGAToolbox`[@Samur2014] package
 
@@ -66,7 +59,7 @@ head(getFirehoseAnalyzeDates())
 ## [1] "20160128" "20150821" "20150402" "20141017" "20140715" "20140416"
 ```
  
-#Clinical and RNA-seq data - download and process
+# Clinical and RNA-seq data - download and process
 
 The clinical information and normalised RNA-seq data is downloaded.
 The methylation data is downloaded separately from the clinical and RNA-seq data because its size was too large for my computer to handle. Thus the methylation data was downloaded in separately in our University departments computer cluster. 
@@ -784,7 +777,7 @@ load("/mnt/hcs/dsm-eccles-seq/methylation450k_files/methylation450k_20160128_raw
 ```
 
 
-##Change the identifier names in the methylation data
+## Change the identifier names in the methylation data
 
 
 ```r
@@ -840,7 +833,7 @@ table(colnames(rnaseqSKCM)==colnames(me450kSKCM)) # patient names are in the sam
 ```
 
 
-##Reducing the size of the methylation 450K data
+## Reducing the size of the methylation 450K data
 
 
 ```r
@@ -900,7 +893,7 @@ me450kSKCM_rounded[1:3,1:3]
 ## cg00000109           NA           NA           NA
 ```
 
-##Acquring methylation probe values for meTIL-score
+## Acquring methylation probe values for meTIL-score
 
 It was demonstrated that methylation probe values can be used to determine the level of CD8 immune cells within bulk tumour [@Jeschke2017]. 
 
@@ -988,5 +981,5 @@ write.csv(meTIL_probes, file="meTIL_probes.csv")
 ```
 
 
-#References
+# References
 
