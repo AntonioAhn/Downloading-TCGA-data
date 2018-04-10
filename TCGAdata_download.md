@@ -239,7 +239,7 @@ plot(log2(rnaseqMel_duplicated[1001:2000,5:6]))
 plot(log2(rnaseqMel_duplicated[1001:2000,7:8]))
 ```
 
-![\label{fig:figure1} The duplicate samples are plotted together to assess the correlation. They look similar and it is not obvious which duplicate to keep.](TCGAdata_download_files/figure-html/figure1-1.png)
+![\label{fig:figure1}The duplicate samples are plotted together to assess the correlation. They look similar and it is not obvious which duplicate to keep.](TCGAdata_download_files/figure-html/figure1-1.png)
 
 The full TCGA barcodes names of these duplicate samples are investigated. Information on TCGA barcodes are given [here](https://wiki.nci.nih.gov/display/TCGA/TCGA+barcode) and information on the sample type (e.g. primary, metastatic, additional metastsatic) from the TCGA barcode is provided [here](https://gdc.cancer.gov/resources-tcga-users/tcga-code-tables/sample-type-codes). 
 
@@ -545,7 +545,7 @@ legend(8000, .95, col=1:7, lwd=2, legend=paste(levels(t_stage), ns))
 text(6000,1, paste("p.value = 5.25e-06"))
 ```
 
-![\label{fig:figure2} Kaplan Meier survival plot of melanoma patients in the TCGA databse according to T stage. As expected, survival becomes poorer from t1 to t4. However it is strange that ti (tis, melanoma insitu) has a sudden drop in survival](TCGAdata_download_files/figure-html/figure2-1.png)
+![\label{fig:figure2}Kaplan Meier survival plot of melanoma patients in the TCGA databse according to T stage. As expected, survival becomes poorer from t1 to t4. However it is strange that ti (tis, melanoma insitu) has a sudden drop in survival.](TCGAdata_download_files/figure-html/figure2-1.png)
 
 
 ```r
@@ -719,7 +719,7 @@ legend(6000, .8, col= c("black","red"), lwd=2, legend=paste(c("low CD74", "high 
 text(4000,0.8, paste("p.value= 1.94e-06"))
 ```
 
-![\label{fig:figure3} Kaplan Meier survival plot of melanoma patients in the TCGA databse according to high and low CD74 expression. Consistent with Ekmekcioglu2016, higher CD74 expression is associated with better prognosis.](TCGAdata_download_files/figure-html/figure3-1.png)
+![\label{fig:figure3}Kaplan Meier survival plot of melanoma patients in the TCGA databse according to high and low CD74 expression. Consistent with Ekmekcioglu2016, higher CD74 expression is associated with better prognosis.](TCGAdata_download_files/figure-html/figure3-1.png)
 
 
 ```r
