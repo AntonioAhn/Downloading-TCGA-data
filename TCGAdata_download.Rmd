@@ -1,16 +1,16 @@
 ---
-title: "TCGA RNAseq, me450k and clinical data download"
+title: "Downloading RNAseq, me450k and clinical data from TCGA melanoma tumours"
 author: "Antonio Ahn"
 date: "`r Sys.Date()`"
 output:
+  html_document:
+    keep_md: true
+    toc: yes
+    fig_caption: yes
   pdf_document:
     highlight: default
     toc: yes
-  github_document:
-    toc: yes
-  html_document:
-    df_print: paged
-    toc: yes
+    fig_caption: yes
 bibliography: /Users/antonioahn/Dropbox/GitHub/Downloading-TCGA-data/TCGAdatadownload.bib
 ---
 
@@ -23,7 +23,7 @@ Ekmekcioglu2016: Inflammatory Marker Testing Identifies CD74 Expression in Melan
 
 #Introduction
 
-This document outlines the approach i took to download data level 3 TCGA data. RNA-seq, methylation 450K data and clinical information was downloaded using the `RTCGAToolbox`[@Samur2014] package and then processed (cleaned-up) for downstream analysis.
+This document outlines the approach i took to download data level 3 TCGA data. RNA-seq, methylation 450K data and clinical information was downloaded using the `RTCGAToolbox`[@Samur2014] package
 
 The `RTCGAToolbox` package written by Samur, retreives data from the broads institutive firehose database. Detailed information on how to use this package are available in the [Vignette](https://www.bioconductor.org/packages/devel/bioc/vignettes/RTCGAToolbox/inst/doc/RTCGAToolbox-vignette.html), online courses [PH525Xseries](http://genomicsclass.github.io/book/pages/tcga.html) and [Youtube](http://rafalab.github.io/pages/harvardx.html) videos. Many of the codes used here were taken from these resources. 
 
@@ -50,11 +50,7 @@ Skin cutaneous melanoma (SKCM) is selected and "20160128" is used as the rundate
 The RNA-seq data (RNASeq2GeneNorm) contains normalised gene expression levels generated using **MapSplice** for alignment and **RNA-Seq by Expectation-Maximization (RSEM)** for quantification. RSEM values are calculated using an algorithm that estimate abundances at the gene level to generate TPM (Transcripts Per Million) values. TPM is similar to FPKM and RPKM in that it accounts for total number of reads and gene length. However TPM has gained more popularity over recent years because it is easier to interpret and more stable when comparing between samples. The normalisation is done by dividing the TPM values by the 75th percentile (3rd quartile) and multiplication by 1000.
 
 ```{r eval=FALSE}
-getFirehoseDatasets()
-head(getFirehoseRunningDates())
-head(getFirehoseAnalyzeDates())
-
-readDataMel <- getFirehoseData (dataset="SKCM", 
+readDataSKCM <- getFirehoseData (dataset="SKCM", 
                                 runDate="20160128",
                                 forceDownload = TRUE, 
                                 clinical = TRUE, 
@@ -68,17 +64,18 @@ load("~/Dropbox/GitHub/Downloading-TCGA-data/RDatafiles/TCGA_readDataSKCM.RData"
 
 ```{r message=FALSE}
 #extract the data
-clinSKCM <- getData(readDataMel, "clinical")
-rnaseqSKCM <- getData(readDataMel, "RNASeq2GeneNorm")
+clinSKCM <- getData(readDataSKCM, "clinical")
+rnaseqSKCM <- getData(readDataSKCM, "RNASeq2GeneNorm")
 ```
 
 The clinical and RNA-seq data are processed (or cleaned up) before any downstream analysis.
 
-1) The TCGA barcodes are structured differently between the clinical and RNA-seq datasets and thus needs to be changed/matched. For example the first TCGA barcode in the RNAseq data is "TCGA-3N-A9WB-06A-11R-A38C-07" whereas in the clinical data it is "tcga.d3.a2je"
+1) The TCGA barcodes are structured differently between the clinical and RNA-seq datasets and thus needs to be matched. For example the first TCGA barcode in the RNAseq data is "TCGA-3N-A9WB-06A-11R-A38C-07" whereas in the clinical data it is "tcga.d3.a2je"
 
-2) Some samples that have 2 RNA-seq data. Duplicate RNA-seq data are removed.
+2) Some samples have 2x RNA-seq data. Duplicate RNA-seq data are removed.
 
 3) Some samples contain RNA-seq data but there is no clinical information. Only those samples that have both RNA-seq and clinical information are retained for downstream analysis. 
+
 ```{r}
 #Changing patient identifier names
 dim(clinSKCM)
@@ -121,20 +118,14 @@ The full TCGA barcodes names of these duplicate samples are investigated. Inform
 ```{r}
 index <- which(colnames(rnaseqSKCM) %in% duplicatedSampleNames)
 
-rnaseqSKCM2 <- getData(readDataMel, "RNASeq2GeneNorm")
+rnaseqSKCM2 <- getData(readDataSKCM, "RNASeq2GeneNorm")
 original_rnaseq_barcode <- colnames(rnaseqSKCM2)
 original_rnaseq_barcode[index]
 ```
 
-#[1] "TCGA-D3-A1QA-07A-11R-A37K-07" "TCGA-D3-A1QA-06A-11R-A18T-07"
-#[3] "TCGA-ER-A19T-06A-11R-A18U-07" "TCGA-ER-A19T-01A-11R-A18T-07"
-#[5] "TCGA-ER-A2NF-06A-11R-A18T-07" "TCGA-ER-A2NF-01A-11R-A18T-07"
-#[7] "TCGA-GN-A4U8-11A-11R-A32P-07" "TCGA-GN-A4U8-06A-11R-A32P-07"
-
 The sample types of these duplicate samples are either of primary solid (01) tumour, metastastic (06), additional metastastic (07) or solid tissue (11) normal. 
 
-Here i will retain metastatic tumours and thus will remove the primary solid tumour, additional metastatic and solid tissue normal. 
-
+Here, from the duplicates, i will retain only metastatic tumours and so I remove the duplicate primary solid tumours, additional metastatic tumour and solid tissue normal. 
 1st duplicate samples: remove the additional metastatic
 2nd duplicate samples: remove the primary tumour 
 3rd duplicate samples: remove the primary
@@ -157,6 +148,14 @@ dim(clinSKCM)
 
 table(colnames(rnaseqSKCM)==rownames(clinSKCM)) # patient names are in the same order
 ```
+
+```{r eval=FALSE}
+#You may wish to create an expression set which contains both RNA-seq and expression matrix. 
+library(Biobase)
+readES = ExpressionSet(as.matrix(log2(rnaseqSKCM+1)))
+pData(readES) = clinSKCM
+```
+
 
 # Survival data clean-up and analysis
 
@@ -188,20 +187,13 @@ table(is.na(clinSKCM[,"days_to_death"]) & !is.na(clinSKCM[,"days_to_last_followu
 table(is.na(clinSKCM$"days_to_death") & is.na(clinSKCM$"days_to_last_followup")) #there are 9 patinets that contain NA for both days_to_death and days_to_last_followup
 ```
 
-However there are some patients with both days_to_last_followup and days_to_death (69 patients). Also there are patients with both of these variables as NA (9 patients).
+There are 9 patients with both "days_to_death" and "days_to_last_followup" as NA.
 ```{r}
 survivalVariables <- c("days_to_last_followup","vital_status","days_to_death")
 
-index <- !is.na(clinSKCM$"days_to_death") & !is.na(clinSKCM$"days_to_last_followup")
-
- table(is.na(clinSKCM$"days_to_death") & is.na(clinSKCM$"days_to_last_followup"))
-
-clinMel[index,survivalVariables]
-dim(clinMel[index,survivalVariables])
-
-index <- is.na(clinMel[,"days_to_death"]) & is.na(clinMel[,"days_to_last_followup"])
-clinMel[index,survivalVariables]
-dim(clinMel[index,survivalVariables])
+index <- is.na(clinSKCM[,"days_to_death"]) & is.na(clinSKCM[,"days_to_last_followup"])
+clinSKCM[index,survivalVariables]
+dim(clinSKCM[index,survivalVariables])
 ```
 
 There is also 1 patient with a negative days_to_last_followup. What does this mean?
@@ -223,7 +215,7 @@ Here i create a new variable called new_death in which:
 * If patient has deceased (1 in vital status), the days_to_death is selected
 * If patient is alive (0 in vital status), days_to_last_followup is selected
 
-```{r cache=TRUE}
+```{r}
 mergeOS <- ifelse(clinSKCM[,"vital_status"]==1, clinSKCM[,"days_to_death"], clinSKCM[,"days_to_last_followup"] )
 
 str(mergeOS)
@@ -234,17 +226,17 @@ clinSKCM$mergeOS <- as.numeric(mergeOS)
 
 ## Survival analysis: sanity check with t-stage
 
-Here i perform a "sanity check" to see if the survival data makes sense. First i look at the prognosis according to the tumour stage. 
+Here i perform a "sanity check" to see if the survival data makes sense. First i look at the prognosis according to the tumour T stage. 
 
 * t0 - patients without a known primary tumor.
-* t1
-* t2
-* t3
-* t4
-* ti
-* tx
+* t1 - melanoma is less than 1 mm thick
+* t2 - melanoma is between 1 mm and 2 mm thick
+* t3 - melanoma is between 2 mm and 4 mm thick
+* t4 - melanoma is more than 4 mm thick
+* tis - Melanoma in situ
+* tx - Primary tumor cannot be assessed (e.g. severely regressed melanoma or curettaged melanoma)
 
-```{r}
+```{r message=FALSE}
 library(survival)
 ```
 
@@ -258,6 +250,9 @@ table(clinSKCM$pathology_T_stage)
 table(substr(clinSKCM$pathology_T_stage,1,2)) 
 
 t_stage = factor(substr(clinSKCM$pathology_T_stage,1,2))
+```
+
+```{r figure2, fig.cap="\\label{fig:figure2} Kaplan Meier survival plot of melanoma patients in the TCGA databse according to T stage. As expected, survival becomes poorer from t1 to t4. However it is strange that ti (tis, melanoma insitu) has a sudden drop in survival"}
 
 plot(survfit(su~t_stage),mark.time=TRUE, lwd=2, col=1:7, las=1, cex.axis=1.5)
 mtext("Overall Survival", side=2, line=2.7, cex=1.5)
@@ -265,14 +260,21 @@ mtext("Time (Days)", side=1, line=2.8, cex=1.5)
 
 ntab = table(t_stage)
 ns = paste("[n=", ntab, "]", sep="")
-legend(8000, .8, col=1:7, lwd=2, legend=paste(levels(t_stage), ns))
+legend(8000, .95, col=1:7, lwd=2, legend=paste(levels(t_stage), ns))
 text(6000,1, paste("p.value = 5.25e-06"))
+```
 
+```{r}
 summary(coxph(su~t_stage))
 survdiff(su~t_stage)
 ```
 
 There is a significant statistical difference in overall survival between the different T stages. 
+
+It is strange that those patients with melanoma insitu has such a poor prognosis. Here i look at the clinical data of these patients. All 8 of these patients did not have distant metastsis and only 1 presented regional lymph node metastasis. However 5 ended up deceased. 
+```{r}
+clinSKCM[clinSKCM$pathology_T_stage %in% "tis",]
+```
 
 
 ## Survival analysis: sanity check with CD74
@@ -289,6 +291,9 @@ table(CD74)
 ev <- as.numeric(clinSKCM$vital_status)
 fut <-as.numeric(clinSKCM$mergeOS)
 su = Surv(fut, ev)
+```
+
+```{r figure3, fig.cap="\\label{fig:figure3} Kaplan Meier survival plot of melanoma patients in the TCGA databse according to high and low CD74 expression. Consistent with Ekmekcioglu2016, higher CD74 expression is associated with better prognosis."}
 
 plot(survfit(su~CD74),mark.time=TRUE, lwd=2, col=c("black","red"), las=1, cex.axis=1.5)
 mtext("Overall Survival", side=2, line=2.7, cex=1.5)
@@ -296,14 +301,14 @@ mtext("Time (Days)", side=1, line=2.8, cex=1.5)
 
 ntab = table(CD74)
 ns = paste("[n=", ntab, "]", sep="")
-legend(8000, .8, col= c("black","red"), lwd=2, legend=paste(levels(CD74), ns))
-text(4000,0.8, paste("p.value= 1.94e-06"))
 
-survdiff(su~CD74, data=clinSKCM)
+legend(6000, .8, col= c("black","red"), lwd=2, legend=paste(c("low CD74", "high CD74"), ns))
+text(4000,0.8, paste("p.value= 1.94e-06"))
 ```
 
-As found in the study, higher CD74 gene expression is associated with a better prognosis.
-
+```{r}
+survdiff(su~CD74, data=clinSKCM)
+```
 
 # Methylation 450K data - download and processing
 
@@ -413,9 +418,12 @@ setwd("/mnt/hcs/dsm-eccles-seq/methylation450k_files")
 save.image("methylation450k_20160128_rounded.RData")
 ```
 
-After i reduced the size of the methylation data to generate `me450kMel_rounded`, I saved into my computer for loading. 
+After i reduced the size of the methylation data to generate `me450kMel_rounded`, I saved into my computer for loading.
+
 ```{r}
-load("/Volumes/dsm-eccles-seq/methylation450k_files/methylation450k_20160128_rounded.RData") #"/Volumes" (on my dekstop) is the same as "/mnt/hcs" (in DSM cluster)
+load ("~/Dropbox/GitHub/RDatafiles/methylation450k_20160128_rounded.RData")
+
+# load("/Volumes/dsm-eccles-seq/methylation450k_files/methylation450k_20160128_rounded.RData") #"/Volumes" (on my dekstop) is the same as "/mnt/hcs" (in DSM cluster)
 
 dim(me450kSKCM_rounded)
 dim(probeinfo)
@@ -426,7 +434,7 @@ me450kSKCM_rounded[1:3,1:3]
 
 ##Acquring methylation probe values for meTIL-score
 
-It was demonstrated that methylation probe values can be used to determine the level of CD8 immune cells within bulk tumour [@ref3]. 
+It was demonstrated that methylation probe values can be used to determine the level of CD8 immune cells within bulk tumour [@Jeschke2017]. 
 
 Beta-values of 5 CpG probes are needed to generate the meTIL-score. Here i did not use me450kMel_rounded but used the data prior to rounding to 3 decimal points.
 
@@ -443,13 +451,14 @@ me450kMel[1:3,1:6]
 1                       0.5167                       0.4193
 2                           NA                           NA
 3                           NA                           NA
+
 ```{r eval=FALSE}
 write.csv(me450kMel[me450kMel$X%in%probes_iwant,], file="meTIL_probes.csv")
 ```
 
 The "meTIL_probes.csv" file is transfered from the server to my computer and then loaded. 
 
-```{r cache=TRUE}
+```{r eval=FALSE}
 meTIL_probes <- read.csv("~/Dropbox/Education/Bioinformatics/5DataAnalysis/TCGAmelanoma/Methylation/meTIL_probes.csv", row.name=1)
 meTIL_probes <- read.csv("~/Dropbox/Education/Bioinformatics/5. DataAnalysis/TCGAmelanoma/Methylation/meTIL_probes.csv", row.name=1)
 
@@ -460,7 +469,7 @@ meTIL_probes <- meTIL_probes[,4:478]
 
 
 Changing identifier names and removing duplicates as was done before. 
-```{r}
+```{r eval=FALSE}
 rid = tolower(substr(colnames(meTIL_probes),1,12))
 rid = gsub("-", ".", rid)
 
@@ -485,7 +494,7 @@ plot(meTIL_duplicated[,9],meTIL_duplicated[,10])
 ```
 There seems to be more variation in the methylation 450K data compared to the RNA-seq data within the duplicates. But I'm not sure which one to take so i will drop the second data.
 
-```{r cache=TRUE}
+```{r eval=FALSE}
 meTIL_probes <- meTIL_probes[,!duplicated(colnames(meTIL_probes))] # dropping the duplicates
 
 dim(meTIL_probes)
