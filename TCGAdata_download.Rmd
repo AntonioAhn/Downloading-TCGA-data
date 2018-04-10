@@ -3,12 +3,12 @@ title: "Downloading RNAseq, me450k and clinical data from TCGA melanoma tumours"
 author: "Antonio Ahn"
 date: "`r Sys.Date()`"
 output:
-  html_document:
-    keep_md: true
-    toc: yes
-    fig_caption: yes
   pdf_document:
     highlight: default
+    toc: yes
+    fig_caption: yes
+  html_document:
+    keep_md: true
     toc: yes
     fig_caption: yes
 bibliography: /Users/antonioahn/Dropbox/GitHub/Downloading-TCGA-data/TCGAdatadownload.bib
